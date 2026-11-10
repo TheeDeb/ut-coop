@@ -390,6 +390,7 @@ class SyncNode:
                     "drawn": self.puppet_drawn,
                     "pos_written": self.puppet_pos_written,
                     "joint_written": self.puppet_joint_written,
+                    "seq": self.seq,
                 }
 
         if self.puppet is not None and (

@@ -22,24 +22,33 @@ scene changes.
 
 ## Quick start
 
-Download `ut-coop.exe` from the releases page and the fork's `gopher64.exe`.
+Download `ut-coop.exe` from the releases page and the fork's `gopher64.exe`, put them
+next to your patched `ultimate_trial.z64`, then run:
 
-Host:
+```
+ut-coop.exe
+```
+
+With no flags it starts a setup wizard: choose host or join, it prints your IPs,
+generates or asks for a session id, finds `gopher64.exe` and `ultimate_trial.z64` next
+to itself, launches the emulator, boots the game and starts syncing. Share the printed
+IP and session with your friend.
+
+Manual host/join (advanced):
 
 ```
 ut-coop.exe --emulator gopher64.exe --rom ultimate_trial.z64 ^
   --coop-port 47900 --bind 0.0.0.0:49001 --peer CLIENT_IP:49002 --session 0x1234
 ```
 
-Join:
-
 ```
 ut-coop.exe --emulator gopher64.exe --rom ultimate_trial.z64 ^
-  --coop-port 47901 --bind 0.0.0.0:49002 --peer HOST_IP:49001 --session 0x1234
+  --coop-port 47900 --bind 0.0.0.0:49002 --peer HOST_IP:49001 --session 0x1234
 ```
 
 Both players must use the same nonzero `--session`; snapshots with another session are
-dropped. Forward the UDP ports (49001/49002 by default) or use a VPN.
+dropped. Forward the UDP ports (49001/49002 by default) or use a VPN (Tailscale, ZeroTier,
+Radmin VPN).
 
 The client launches the emulator, waits for the bridge, taps through the menu and intro
 once, then starts syncing. Use `--no-launch` to attach to an emulator you started
@@ -49,6 +58,8 @@ yourself, and `--no-boot` if the game is already in gameplay.
 
 | Option | Meaning |
 |---|---|
+| *(no arguments)* | setup wizard: host/join, IP, session, file detection |
+| `--wizard` | force the setup wizard even if `--peer` is set |
 | `--emulator PATH` | gopher64 fork executable |
 | `--rom PATH` | patched Ultimate Trial ROM |
 | `--coop-port N` | local bridge port opened by the fork |
@@ -64,7 +75,8 @@ yourself, and `--no-boot` if the game is already in gameplay.
 
 ## Status and known issues
 
-- Same-area co-op works; trial-to-trial travel is only partially validated.
+- Same-area co-op works, and the joining side follows the host between scenes 41 and 42
+  in testing; broader trial-to-trial travel is still lightly tested.
 - The puppet's animation is stepped at the snapshot rate (no interpolation).
 - Scene changes are followed by replaying the host's entrance index; if a load fails,
   the two sides stay gated until the scene ids match again.
