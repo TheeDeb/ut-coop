@@ -135,6 +135,7 @@ class SyncNode:
         puppet: int | None = None,
         auto_follow: bool = False,
         session: int = 0,
+        animate: bool = True,
     ):
         self.client = connect_emulator(coop_port)
         self.coop_port = coop_port
@@ -158,6 +159,13 @@ class SyncNode:
         self.scene_gates = 0
         self.auto_follow = auto_follow
         self.session = session
+        self.animate = animate
+        self.follow_attempts = 0
+        self.max_follow_attempts = 5
+        self.follow_gave_up = False
+        self._last_scene: int | None = None
+        self._scene_changed_at = 0.0
+        self.scene_stable_delay = 6.0
         self.follow_count = 0
         self.following_scene: int | None = None
         self._follow_ready = 0.0
@@ -269,6 +277,14 @@ class SyncNode:
         )
 
     def _try_reinject(self) -> None:
+        # Never touch the actor list while a scene transition is in flight.
+        if self._last_scene is not None:
+            if time.monotonic() - self._scene_changed_at < self.scene_stable_delay:
+                return
+        if self.lists is not None:
+            scene = puppet_mod.scene_state(self.client, self.lists)
+            if scene is not None and scene.get("trigger", 0) != 0:
+                return
         if not player_state.is_actor(self.client, self.actor):
             found = player_state.find_player(self.client)
             if found is not None:
@@ -312,6 +328,10 @@ class SyncNode:
             if override is not None:
                 local_scene = override
             self.scene_id = local_scene
+            if local_scene is not None:
+                if self._last_scene is not None and local_scene != self._last_scene:
+                    self._scene_changed_at = time.monotonic()
+                self._last_scene = local_scene
             remote_scene = self.remote["scene"] if self.remote is not None else None
             same = remote_scene is None or (
                 local_scene is not None and remote_scene == local_scene
@@ -319,6 +339,7 @@ class SyncNode:
             if not same:
                 if (
                     self.auto_follow
+                    and not self.follow_gave_up
                     and self.lists is not None
                     and self.remote is not None
                     and 0 < self.remote.get("entrance", 0) < 0x1000
@@ -340,8 +361,15 @@ class SyncNode:
                         ]
                     )
                     self.follow_count += 1
+                    self.follow_attempts += 1
                     self.following_scene = self.remote["scene"]
                     self._follow_ready = time.monotonic() + 4.0
+                    if self.follow_attempts >= self.max_follow_attempts:
+                        self.follow_gave_up = True
+                        print(
+                            "scene follow gave up after "
+                            f"{self.follow_attempts} attempts; staying put"
+                        )
                 if self.puppet_active and self.lists is not None:
                     puppet_mod.unlink(self.client, self.lists, self.actor)
                     self.puppet_active = False
@@ -356,8 +384,11 @@ class SyncNode:
                 (OP_WRITE, self.puppet + 0x24, struct.pack(">fffhhh", *pos, *rot)),
                 (OP_WRITE, self.puppet + puppet_mod.OFF_SHAPE_ROT, struct.pack(">hhh", *rot)),
                 (OP_WRITE, self.puppet + puppet_mod.OFF_APPEARANCE, self.remote["appearance"]),
-                (OP_WRITE, self.puppet + puppet_mod.OFF_JOINT, self.remote["joint"]),
             ]
+            if self.animate:
+                writes.append(
+                    (OP_WRITE, self.puppet + puppet_mod.OFF_JOINT, self.remote["joint"])
+                )
             if self.seq % 5 == 0:
                 x, y, z = pos
                 writes += [

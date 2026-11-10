@@ -124,6 +124,12 @@ def run_wizard(args) -> argparse.Namespace:
             session = args.session
     args.session = session
 
+    # Scene following is opt-in; it can force loads and is still experimental.
+    args.follow = bool(args.follow and not args.no_follow)
+    print("Scene follow: " + ("on" if args.follow else "off (pass --follow to enable)"))
+    if host and args.follow:
+        print("Note: the host should normally leave follow off; the joiner follows the host.")
+
     if host:
         friend = input("Friend's IP: ").strip()
         args.bind = f"0.0.0.0:{bind_port}"
@@ -152,7 +158,9 @@ def main() -> int:
     parser.add_argument("--rate", type=float, default=30.0)
     parser.add_argument("--session", type=lambda x: int(x, 0), default=0, help="session id shared by both peers")
     parser.add_argument("--wizard", action="store_true", help="ask for host/join, IP and session")
+    parser.add_argument("--follow", action="store_true", help="follow the peer's scene changes (experimental)")
     parser.add_argument("--no-puppet", action="store_true")
+    parser.add_argument("--no-anim", action="store_true", help="do not stream the skeleton pose (static puppet)")
     parser.add_argument("--no-follow", action="store_true")
     parser.add_argument("--no-launch", action="store_true", help="attach to a running emulator")
     parser.add_argument("--no-boot", action="store_true", help="skip menu automation")
@@ -191,8 +199,9 @@ def main() -> int:
             parse_addr(args.peer),
             rate=args.rate,
             puppet=None if args.no_puppet else puppet_mod.PUPPET,
-            auto_follow=not args.no_follow,
+            auto_follow=bool(args.follow and not args.no_follow),
             session=args.session,
+            animate=not args.no_anim,
         )
         print(
             f"connected: scene {node.scene_id}, local bridge {args.coop_port}, "

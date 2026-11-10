@@ -22,7 +22,7 @@ scene changes.
 
 ## Quick start
 
-Download **`ut-coop-bundle-v0.1.1.zip`** from the releases page. It contains
+Download **`ut-coop-bundle-v0.1.2.zip`** from the releases page. It contains
 `ut-coop.exe`, `gopher64.exe` and `START-HERE.txt`. Extract it into a folder, put your
 patched `ultimate_trial.z64` beside them, create a File 1 save once, then run:
 
@@ -69,15 +69,19 @@ yourself, and `--no-boot` if the game is already in gameplay.
 | `--session N` | shared session id (nonzero recommended) |
 | `--rate HZ` | snapshot rate, default 30 |
 | `--no-puppet` | do not render the remote Link |
-| `--no-follow` | do not follow the peer's scene changes |
+| `--no-anim` | do not stream the skeleton pose (static puppet) |
+| `--follow` | follow the peer's scene changes (experimental, off by default) |
+| `--no-follow` | force scene following off |
 | `--no-launch` | attach to a running emulator |
 | `--no-boot` | skip menu/intro automation |
 | `--seconds N` | exit after N seconds (testing) |
 
 ## Status and known issues
 
-- Same-area co-op works, and the joining side follows the host between scenes 41 and 42
-  in testing; broader trial-to-trial travel is still lightly tested.
+- Same-area co-op works. Scene following is opt-in (`--follow`) and validated between
+  scenes 41 and 42 in testing; broader trial-to-trial travel is still lightly tested.
+- The puppet is not injected during scene loads or shortly after a scene change, which
+  fixes a freeze seen in the first real session.
 - The puppet's animation is stepped at the snapshot rate (no interpolation).
 - Scene changes are followed by replaying the host's entrance index; if a load fails,
   the two sides stay gated until the scene ids match again.
