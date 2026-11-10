@@ -22,8 +22,9 @@ scene changes.
 
 ## Quick start
 
-Download `ut-coop.exe` from the releases page and the fork's `gopher64.exe`, put them
-next to your patched `ultimate_trial.z64`, then run:
+Download **`ut-coop-bundle-v0.1.1.zip`** from the releases page. It contains
+`ut-coop.exe`, `gopher64.exe` and `START-HERE.txt`. Extract it into a folder, put your
+patched `ultimate_trial.z64` beside them, create a File 1 save once, then run:
 
 ```
 ut-coop.exe
